@@ -4,19 +4,19 @@
 # author: Beth Anderson (github.com/betandr)
 
 if test "$#" -ne 1; then
-    echo "Usage: sh 01_hal_up.sh 000 (where 000 is replaced with your index)"
+    echo "Usage: sh 01_hal_up.sh $INDEX"
     exit 1
 fi
 
 echo "\n" \
 ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n" \
 ":: Warning: This script will provision infrastructure in the cloud and   ::\n" \
-":: will therefore cost real, cash money. Please be sure that you do want ::\n" \
-":: to proceed!                                                           ::\n" \
+":: could therefore cost money. Please be sure that you do want to        ::\n" \
+":: proceed and you understand the implications!                          ::\n" \
 ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n"
 
 while true; do
-    read -p "Create \`halyard-host-$1\` and service accounts?(y/n) " yn
+    read -p "Create \`halyard-host-$1\` and service accounts (y/n)? " yn
     case $yn in
         [Yy]* )
       		GCP_PROJECT=$(gcloud info --format='value(config.project)')
@@ -40,21 +40,36 @@ while true; do
       		    --role roles/container.admin \
       		    --member serviceAccount:$HALYARD_SA_EMAIL
 
-          GCS_SA=gcs-service-account-$1
+          echo "---> creating Spinnaker and cluster service account..."
+          GCS_SPIN_SA=gcs-spin-service-account-$1
+          GCS_PROD_SA=gcs-prod-service-account-$1
 
           echo "---> creating GCS and GCR service accounts..."
-          gcloud iam service-accounts create $GCS_SA \
+          gcloud iam service-accounts create $GCS_SPIN_SA \
               --project=$GCP_PROJECT \
-              --display-name $GCS_SA
+              --display-name $GCS_SPIN_SA
 
-          GCS_SA_EMAIL=$(gcloud iam service-accounts list \
+          gcloud iam service-accounts create $GCS_PROD_SA \
               --project=$GCP_PROJECT \
-              --filter="displayName:$GCS_SA" \
+              --display-name $GCS_PROD_SA
+
+          GCS_SA_SPIN_EMAIL=$(gcloud iam service-accounts list \
+              --project=$GCP_PROJECT \
+              --filter="displayName:$GCS_SPIN_SA" \
+              --format='value(email)')
+
+          GCS_SA_PROD_EMAIL=$(gcloud iam service-accounts list \
+              --project=$GCP_PROJECT \
+              --filter="displayName:$GCS_PROD_SA" \
               --format='value(email)')
 
           gcloud projects add-iam-policy-binding $GCP_PROJECT \
               --role roles/storage.admin \
-              --member serviceAccount:$GCS_SA_EMAIL
+              --member serviceAccount:$GCS_SA_SPIN_EMAIL
+
+          gcloud projects add-iam-policy-binding $GCP_PROJECT \
+              --role roles/storage.admin \
+              --member serviceAccount:$GCS_SA_PROD_EMAIL
 
           HALYARD_HOST=$(echo halyard-host-$1 | tr '_.' '-')
 
@@ -78,7 +93,7 @@ while true; do
           echo "---> complete"
 
           while true; do
-              read -p "---> SSH to instance now? (y/n) " yn
+              read -p "---> SSH to instance now (y/n)? " yn
               case $yn in
                   [Yy]* )
                     gcloud compute ssh $HALYARD_HOST \
