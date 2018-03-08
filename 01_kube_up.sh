@@ -18,30 +18,53 @@ echo "\n" \
 GCP_PROJECT=$(gcloud info --format='value(config.project)')
 
 while true; do
-    read -p "Create \`spinnaker-cluster-$1\` in zone \`$3\` (y/n)? " yn
+    read -p "Create \`spinnaker-cluster-$1\` in zone \`$4\` in the \`$GCP_PROJECT\` project (y/n)? " yn
     case $yn in
         [Yy]* )
+          # TODO remove this when Kubernetes v1.10 released
+          gcloud config set container/new_scopes_behavior true
+
       		echo "---> creating spinnaker-cluster-$1 in the $GCP_PROJECT project in zone $4..."
           gcloud container clusters create "spinnaker-cluster-$1" \
             --project $GCP_PROJECT \
             --zone $4 \
+            --username "admin" \
             --machine-type "n1-standard-1" \
+            --image-type "COS" \
+            --disk-size "100" \
             --num-nodes "3" \
-            --labels env=production,owner=$USER
+            --network "default" \
+            --enable-cloud-logging \
+            --enable-cloud-monitoring \
+            --subnetwork "default" \
+            --labels env=production$1,owner=$USER
+      		echo "---> complete..."
 
+      		break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+while true; do
+    read -p "Reserve 2 external IPs for Spinnaker in \`$3\` region and \`$GCP_PROJECT\` project (y/n)? " yn
+    case $yn in
+        [Yy]* )
           echo "---> reserving static address for spin deck"
           gcloud compute addresses create spinnaker-$1 \
             --project=$GCP_PROJECT \
             --region=$3
           gcloud compute addresses list --filter="name=('spinnaker-$1')"
-          read -n 1 -s -r -p "---> note the address then press any key to continue\n"
+          read -n 1 -s -r -p "---> note the address then press any key to continue"
+          echo ""
 
           echo "---> reserving static address for spin gate"
           gcloud compute addresses create spinnaker-api-$1 \
             --project=$GCP_PROJECT \
             --region=$3
           gcloud compute addresses list --filter="name=('spinnaker-api-$1')"
-          read -n 1 -s -r -p "---> note the address then press any key to continue\n"
+          read -n 1 -s -r -p "---> note the address then press any key to continue"
+          echo ""
 
       		echo "---> complete..."
 
@@ -52,18 +75,27 @@ while true; do
 done
 
 while true; do
-    read -p "Create \`$2-cluster-$1\` in zone \`$3\` (y/n)? " yn
+    read -p "Create \`$2-cluster-$1\` in zone \`$4\` in the \`$GCP_PROJECT\` project (y/n)? " yn
     case $yn in
         [Yy]* )
+          # TODO remove this when Kubernetes v1.10 released
+          gcloud config set container/new_scopes_behavior true
+
       		echo "---> creating $2-cluster-$1..."
           gcloud container clusters create "$2-cluster-$1" \
             --project $GCP_PROJECT \
             --zone $4 \
+            --username "admin" \
             --machine-type "n1-standard-2" \
+            --image-type "COS" \
+            --disk-size "100" \
             --num-nodes "6" \
-            --labels env=production,owner=$USER
-
-            echo "---> complete..."
+            --network "default" \
+            --enable-cloud-logging \
+            --enable-cloud-monitoring \
+            --subnetwork "default" \
+            --labels env=production$1,owner=$USER
+          echo "---> complete..."
 
       		break;;
         [Nn]* ) exit;;

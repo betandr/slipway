@@ -8,6 +8,8 @@ based on
 [Halyard on GKE Quickstart](https://www.spinnaker.io/setup/quickstart/halyard-gke/)
 guide.
 
+![Slipway](http://bet.andr.io/images/slipway.jpg)
+
 Slipway also sets up Spinnaker to be publicly accessible with Oauth2
 authentication and sets up some container registry repositories and a Slackbot.
 If this exact configuration is not what you want then the
@@ -49,7 +51,7 @@ For these example values two clusters will be provisioned:
 
 The script will also reserve two IP addresses `spinnaker-$INDEX` and
 `spinnaker-api-$INDEX` which you should note down for the
-[Run Spinnaker provisioning script](run-spinnaker-provisioning-script) step later.
+[Run Spinnaker provisioning script](#run-spinnaker-provisioning-script) step later.
 
 ## 2. Provision Halyard Host VM
 
@@ -82,7 +84,7 @@ Follow the [Public Spinnaker on GKE](https://www.spinnaker.io/setup/quickstart/h
 instructions to reserve two IP addresses then create DNS records for the
 Spinnaker API and UI load-balancers. The DNS records become `OVERRIDE_API_URL`
 and `OVERRIDE_UI_URL` and the IPs are used to configure Kubernetes in the
-[Run Spinnaker provisioning script](run-spinnaker-provisioning-script) step.
+[Run Spinnaker provisioning script](#run-spinnaker-provisioning-script) step.
 
 ### Get the Spinnaker provisioning script
 ```
@@ -101,6 +103,8 @@ curl -O  https://raw.githubusercontent.com/betandr/slipway/master/03_spin_up.sh
 | `BOTNAME` | _(Optional — if not used; no Slack)_ The Slackbot name (set up in Slackbot). You will be prompted for the token. (see [Slack: Bot Users](https://api.slack.com/bot-users#how_do_i_create_custom_bot_users_for_my_team)) | `slackbot` |
 | `OVERRIDE_API_URL` | Public Spinnaker API endpoint (see [Public Spinnaker on GKE](https://www.spinnaker.io/setup/quickstart/halyard-gke-public/)) | `http://spinnaker-api.example.com` |
 | `OVERRIDE_UI_URL` | Public Spinnaker UI endpoint (see [Public Spinnaker on GKE](https://www.spinnaker.io/setup/quickstart/halyard-gke-public/)) |`http://spinnaker.example.com` |
+| `SPIN_GATE_IP` | The spin-gate reserved IP from the [Run Kubernetes provisioning script](#run-kubernetes-provisioning-script) step | `35.45.25.15` |
+| `SPIN_DECK_IP` | The spin-deck reserved IP from the [Run Kubernetes provisioning script](#run-kubernetes-provisioning-script) step | `35.45.25.15` |
 
 One method to do this is to have a local `secrets` file, containing something like:
 ```
@@ -129,22 +133,15 @@ project2/container-b
 sh 03_spin_up.sh $INDEX $CLUSTER_NAME
 ```
 ...where `$INDEX` and `$CLUSTER_NAME` match the values specified in
-[Run the script](#run-the-script) in the
-[1. Provision Kubernetes clusters](1-provision-kubernetes-clusters) section.
+[Run Kubernetes provisioning script](#run-kubernetes-provisioning-script) in the
+[1. Provision Kubernetes clusters](#1-provision-kubernetes-clusters) section.
 
-To enable access to Spinnaker the Kubernetes service config needs to be edited.
+#### Enter reserved external addresses
 
-After being prompted `3 changes to be made to spin deck`:
-- change both `port:` values to `80`
-- change `type:` to `LoadBalancer`
-- add `loadBalancerIP:` to be the `spinnaker-$INDEX` address from the
-[1. Provision Kubernetes clusters](1-provision-kubernetes-clusters) step.
-
-After being prompted `3 changes to be made to spin gate`:
-- change `port:` to `80`
-- change `type:` to `LoadBalancer`
-- add `loadBalancerIP:` to be the `spinnaker-api-$INDEX` address from the
-[1. Provision Kubernetes clusters](1-provision-kubernetes-clusters) step.
+To enable external access to Spinnaker the Kubernetes service config will be
+updated. You will be prompted for the `spinnaker-$INDEX` and the
+`spinnaker-api-$INDEX` addresses from the
+[1. Provision Kubernetes clusters](#1-provision-kubernetes-clusters) step.
 
 ## Decommissioning
 This is not yet automated as it could potentially be dangerous, but things to
@@ -158,10 +155,11 @@ clear up for the clusters and VM host are:
 - IAM Permissions: `gcs-prod-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - IAM Permissions: `gcs-spin-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - IAM Permissions: `halyard-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
+- Load Balancers - target pool, forwarding rule
 - VPC Network: `spinnaker-$INDEX` reserved external IP
 - VPC Network: `spinnaker-api-$INDEX` reserved external IP
-- Load Balancers - target pool, forwarding rule
 
 ## TODO
 - Check quota before provisioning
-- Sed the spin-deck and spin-gate kubectl config
+- Check permissions before provisioning
+- Get the reserved external IPs automatically via `gcloud compute addresses list`.

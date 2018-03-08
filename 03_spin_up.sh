@@ -4,13 +4,7 @@
 # author: Beth Anderson (github.com/betandr)
 
 if test "$#" -ne 2; then
-    echo "Usage: sh 02_spin_up.sh $INDEX $CLUSTER_NAME\n\n" \
-      "Also requires the following environment variables to be set (examples) :\n" \
-      " - DOMAIN=example.com\n" \
-      " - CLIENT_ID=00000000000-a0a0a0a0a0a0a0a0a0a0a00a0a0.apps.googleusercontent.com\n" \
-      " - CLIENT_SECRET=A0A0A0A0A0A0A0A0A0A0-A0\n" \
-      " - BOTNAME=slackbot\n" \
-      " - REDIRECT_URL=http://spinnaker-api.example.com/login"
+    echo "Usage: sh 02_spin_up.sh $INDEX $CLUSTER_NAME"
     exit 1
 fi
 
@@ -31,6 +25,8 @@ echo "Oauth 2 Client ID: $OAUTH2_CLIENT_ID"
 echo "Oauth 2 Client Secret: $OAUTH2_CLIENT_SECRET"
 echo "Oauth 2 Redirect URL: $OAUTH2_REDIRECT_URL"
 echo "Slackbot Name: $BOTNAME"
+echo "Spinnaker UI address: $SPIN_DECK_IP"
+echo "Spinnaker API address: $SPIN_GATE_IP"
 echo "\n............. container registry repos in repos.txt ............."
 if [ -f repos.txt ]
 then
@@ -118,11 +114,11 @@ while true; do
 
           hal config provider kubernetes account add spinnaker-k8s-account-$1 \
               --docker-registries spinnaker-gcr-account-$1 \
-              --context $(kubectl config current-context)
+              --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"spinnaker-cluster-$INDEX
 
           hal config provider kubernetes account add production-k8s-account-$1 \
               --docker-registries production-gcr-account-$1 \
-              --context $(kubectl config current-context)
+              --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"$CLUSTER_NAME-cluster-$INDEX
 
           echo "---> adding repos..."
           if [ -f repos.txt ]
@@ -130,9 +126,9 @@ while true; do
             while read repo; do
               if [ ! -z "$repo" ]
               then
-                echo "Adding "$repo" container repository to Spinnaker account".
+                echo "------> Adding "$repo" container repository to production account".
 
-                hal config provider docker-registry account edit spinnaker-gcr-account-$INDEX \
+                hal config provider docker-registry account edit production-gcr-account-$INDEX \
                   --add-repository $repo
               fi
 
@@ -143,7 +139,8 @@ while true; do
 
           if [ ! -z "$BOTNAME" ]
           then
-            echo "---> configuring slack...obtain a slackbot token from https://$YOUR_WORKSPACE.slack.com/apps/manage/custom-integrations"
+            echo "---> configuring slack..."
+            echo "---> ACTION: obtain a slackbot token from https://$YOUR_WORKSPACE.slack.com/apps/manage/custom-integrations"
             hal config notification slack enable
             hal config notification slack edit --bot-name $BOTNAME --token
           else
@@ -184,24 +181,15 @@ while true; do
 
           if [ ! -z "$OVERRIDE_UI_URL" ]
           then
-            echo "---> 3 changes to be made to spin deck:"
-            echo "- change \`port:\` to \`80\`"
-            echo "- change \`type:\` to \`LoadBalancer\`"
-            echo "- add \`loadBalancerIP:\`"
-            read -n 1 -s -r -p "---> press any key to continue"
-            kubectl edit svc spin-deck -n spinnaker
+            echo "---> patching spin-deck with loadBalancerIP $SPIN_DECK_IP"
+            curl https://raw.githubusercontent.com/betandr/slipway/master/patch-deck.yaml | sed s/SPIN_DECK_IP/$SPIN_DECK_IP/g > patch-deck.yaml
+            kubectl patch svc spin-deck --patch "$(cat patch-deck.yaml)" -n spinnaker
 
-            echo ""
+            echo "---> patching spin-gate with loadBalancerIP $SPIN_GATE_IP"
+            curl https://raw.githubusercontent.com/betandr/slipway/master/patch-gate.yaml | sed s/SPIN_GATE_IP/$SPIN_GATE_IP/g > patch-gate.yaml
+            kubectl patch svc spin-gate --patch "$(cat patch-gate.yaml)" -n spinnaker
 
-            echo "---> 3 changes to be made to spin gate:"
-            echo "- change \`port:\` to \`80\`"
-            echo "- change \`type:\` to \`LoadBalancer\`"
-            echo "- add \`loadBalancerIP:\` to be the following address:"
-            read -n 1 -s -r -p "---> press any key to continue"
-            kubectl edit svc spin-gate -n spinnaker
-
-            echo "---> action:"
-            echo "---> update domain record target for $OVERRIDE_UI_URL and $OVERRIDE_API_URL with new addresses..."
+            echo "---> ACTION: update domain record target for $OVERRIDE_UI_URL and $OVERRIDE_API_URL with new addresses..."
           else
             echo "---> no override ui url found..."
           fi

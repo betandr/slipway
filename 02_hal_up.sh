@@ -83,6 +83,7 @@ while true; do
               --service-account=$HALYARD_SA_EMAIL \
               --image-project=ubuntu-os-cloud \
               --image-family=ubuntu-1404-lts
+              --labels env=production$1,owner=$USER
 
           echo "gcloud compute ssh $HALYARD_HOST" \
             "--project=$GCP_PROJECT" \

@@ -1,0 +1,8 @@
+spec:
+  ports:
+  - name: pubhttp
+    port: 80
+    protocol: TCP
+    targetPort: 8084
+  type: LoadBalancer
+  loadBalancerIP: SPIN_GATE_IP
