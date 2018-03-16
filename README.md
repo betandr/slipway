@@ -155,9 +155,9 @@ clear up for the clusters and VM host are:
 - IAM Permissions: `gcs-prod-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - IAM Permissions: `gcs-spin-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - IAM Permissions: `halyard-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
-- Load Balancers - target pool, forwarding rule
 - VPC Network: `spinnaker-$INDEX` reserved external IP
 - VPC Network: `spinnaker-api-$INDEX` reserved external IP
+- VPC Network: target pools, forwarding rules
 
 ## TODO
 - Check quota before provisioning
