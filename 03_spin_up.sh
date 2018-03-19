@@ -93,7 +93,7 @@ while true; do
           echo "---> configure GCS persistence..."
           hal config storage gcs edit \
               --project $GCP_PROJECT \
-              --json-path ~/.gcp/gcp-spin.json
+              --json-path $GCS_SPIN_SA_DEST
 
           hal config storage edit --type gcs
 
@@ -102,12 +102,12 @@ while true; do
 
           hal config provider docker-registry account add spinnaker-gcr-account-$1 \
               --address gcr.io \
-              --password-file ~/.gcp/gcp-spin.json \
+              --password-file $GCS_SPIN_SA_DEST \
               --username _json_key
 
           hal config provider docker-registry account add production-gcr-account-$1 \
               --address gcr.io \
-              --password-file ~/.gcp/gcp-spin.json \
+              --password-file $GCS_PROD_SA_DEST \
               --username _json_key
 
           hal config provider kubernetes enable
@@ -120,7 +120,7 @@ while true; do
               --docker-registries production-gcr-account-$1 \
               --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"$CLUSTER_NAME-cluster-$INDEX
 
-          echo "---> adding repos..."
+          echo "---> adding repos to production account..."
           if [ -f repos.txt ]
           then
             while read repo; do
