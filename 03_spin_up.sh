@@ -60,7 +60,7 @@ while true; do
           gcloud container clusters get-credentials spinnaker-cluster-$1 \
               --zone=$CLUSTER_ZONE
 
-          gcloud container clusters get-credentials $CLUSTER_NAME-cluster-$1 \
+          gcloud container clusters get-credentials $2-cluster-$1 \
               --zone=$CLUSTER_ZONE
 
           echo "---> create service accounts..."
@@ -118,7 +118,7 @@ while true; do
 
           hal config provider kubernetes account add production-k8s-account-$1 \
               --docker-registries production-gcr-account-$1 \
-              --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"$CLUSTER_NAME-cluster-$INDEX
+              --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"$2-cluster-$INDEX
 
           echo "---> adding repos to production account..."
           if [ -f repos.txt ]
