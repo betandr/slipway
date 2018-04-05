@@ -17,8 +17,7 @@ echo "\n" \
 
 echo "PLEASE CHECK THESE SETTINGS BEFORE CONTINUING!"
 echo ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n"
-echo "Spinnaker Cluster: spinnaker-cluster-$1"
-echo "Production Cluster: $2-cluster-$1"
+echo "Kubernetes Cluster: $2-cluster-$1"
 echo "Cluster Zone: $CLUSTER_ZONE"
 echo "Oauth2 Domain: $OAUTH2_DOMAIN"
 echo "Oauth 2 Client ID: $OAUTH2_CLIENT_ID"
@@ -57,38 +56,25 @@ while true; do
           echo "---> get credentials..."
           gcloud config set container/use_client_certificate true
 
-          gcloud container clusters get-credentials spinnaker-cluster-$1 \
-              --zone=$CLUSTER_ZONE
-
           gcloud container clusters get-credentials $2-cluster-$1 \
               --zone=$CLUSTER_ZONE
 
           echo "---> create service accounts..."
           GCS_SPIN_SA=gcs-spin-service-account-$1
-          GCS_PROD_SA=gcs-prod-service-account-$1
-
           GCS_SPIN_SA_DEST=~/.gcp/gcp-spin.json
-          GCS_PROD_SA_DEST=~/.gcp/gcp-prod.json
 
           mkdir -p $(dirname $GCS_SPIN_SA_DEST)
-          mkdir -p $(dirname $GCS_PROD_SA_DEST)
 
           GCS_SPIN_SA_EMAIL=$(gcloud iam service-accounts list \
               --filter="displayName:$GCS_SPIN_SA" \
               --format='value(email)')
 
-          GCS_PROD_SA_EMAIL=$(gcloud iam service-accounts list \
-            --filter="displayName:$GCS_PROD_SA" \
-              --format='value(email)')
-
           gcloud iam service-accounts keys create $GCS_SPIN_SA_DEST \
             --iam-account $GCS_SPIN_SA_EMAIL
 
-          gcloud iam service-accounts keys create $GCS_PROD_SA_DEST \
-            --iam-account $GCS_PROD_SA_EMAIL
-
           echo "---> set Halyard version..."
-          hal config version edit --version $(hal version latest -q)
+          # TODO use $(hal version latest -q)
+          hal config version edit --version 1.6.0
 
           echo "---> configure GCS persistence..."
           hal config storage gcs edit \
@@ -100,27 +86,18 @@ while true; do
           echo "---> configure pulling from GCR..."
           hal config provider docker-registry enable
 
-          hal config provider docker-registry account add spinnaker-gcr-account-$1 \
+          hal config provider docker-registry account add $CLUSTER_NAME-gcr-account-$INDEX \
               --address gcr.io \
               --password-file $GCS_SPIN_SA_DEST \
               --username _json_key
 
-          hal config provider docker-registry account add production-gcr-account-$1 \
-              --address gcr.io \
-              --password-file $GCS_PROD_SA_DEST \
-              --username _json_key
-
           hal config provider kubernetes enable
 
-          hal config provider kubernetes account add spinnaker-k8s-account-$1 \
-              --docker-registries spinnaker-gcr-account-$1 \
-              --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"spinnaker-cluster-$INDEX
+          hal config provider kubernetes account add $CLUSTER_NAME-k8s-account-$INDEX \
+              --docker-registries $CLUSTER_NAME-gcr-account-$INDEX \
+              --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"$CLUSTER_NAME-cluster-$INDEX
 
-          hal config provider kubernetes account add production-k8s-account-$1 \
-              --docker-registries production-gcr-account-$1 \
-              --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"$2-cluster-$INDEX
-
-          echo "---> adding repos to production account..."
+          echo "---> adding repos to kubernetes account..."
           if [ -f repos.txt ]
           then
             while read repo; do
@@ -128,7 +105,7 @@ while true; do
               then
                 echo "------> Adding "$repo" container repository to production account".
 
-                hal config provider docker-registry account edit production-gcr-account-$INDEX \
+                hal config provider docker-registry account edit $2-gcr-account-$INDEX \
                   --add-repository $repo
               fi
 
@@ -148,11 +125,7 @@ while true; do
           fi
 
           hal config deploy edit \
-            --account-name spinnaker-k8s-account-$1 \
-            --type distributed
-
-          hal config deploy edit \
-            --account-name production-k8s-account-$1 \
+            --account-name $2-k8s-account-$1 \
             --type distributed
 
           if [ ! -z "$OAUTH2_CLIENT_ID" ]

@@ -18,27 +18,27 @@ echo "\n" \
 GCP_PROJECT=$(gcloud info --format='value(config.project)')
 
 while true; do
-    read -p "Create \`spinnaker-cluster-$1\` in zone \`$4\` in the \`$GCP_PROJECT\` project (y/n)? " yn
+    read -p "Create \`$2-cluster-$1\` in zone \`$4\` in the \`$GCP_PROJECT\` project (y/n)? " yn
     case $yn in
         [Yy]* )
           # TODO remove this when Kubernetes v1.10 released
           gcloud config set container/new_scopes_behavior true
 
-      		echo "---> creating spinnaker-cluster-$1 in the $GCP_PROJECT project in zone $4..."
-          gcloud container clusters create "spinnaker-cluster-$1" \
+      		echo "---> creating $2-cluster-$1..."
+          gcloud container clusters create "$2-cluster-$1" \
             --project $GCP_PROJECT \
             --zone $4 \
             --username "admin" \
-            --machine-type "n1-standard-1" \
+            --machine-type "n1-standard-2" \
             --image-type "COS" \
             --disk-size "100" \
-            --num-nodes "3" \
+            --num-nodes "6" \
             --network "default" \
             --enable-cloud-logging \
             --enable-cloud-monitoring \
             --subnetwork "default" \
             --labels env=production$1,owner=$USER
-      		echo "---> complete..."
+          echo "---> complete..."
 
       		break;;
         [Nn]* ) exit;;
@@ -67,35 +67,6 @@ while true; do
           echo ""
 
       		echo "---> complete..."
-
-      		break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-
-while true; do
-    read -p "Create \`$2-cluster-$1\` in zone \`$4\` in the \`$GCP_PROJECT\` project (y/n)? " yn
-    case $yn in
-        [Yy]* )
-          # TODO remove this when Kubernetes v1.10 released
-          gcloud config set container/new_scopes_behavior true
-
-      		echo "---> creating $2-cluster-$1..."
-          gcloud container clusters create "$2-cluster-$1" \
-            --project $GCP_PROJECT \
-            --zone $4 \
-            --username "admin" \
-            --machine-type "n1-standard-2" \
-            --image-type "COS" \
-            --disk-size "100" \
-            --num-nodes "6" \
-            --network "default" \
-            --enable-cloud-logging \
-            --enable-cloud-monitoring \
-            --subnetwork "default" \
-            --labels env=production$1,owner=$USER
-          echo "---> complete..."
 
       		break;;
         [Nn]* ) exit;;

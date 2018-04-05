@@ -42,34 +42,20 @@ while true; do
 
           echo "---> creating Spinnaker and cluster service account..."
           GCS_SPIN_SA=gcs-spin-service-account-$1
-          GCS_PROD_SA=gcs-prod-service-account-$1
 
           echo "---> creating GCS and GCR service accounts..."
           gcloud iam service-accounts create $GCS_SPIN_SA \
               --project=$GCP_PROJECT \
               --display-name $GCS_SPIN_SA
 
-          gcloud iam service-accounts create $GCS_PROD_SA \
-              --project=$GCP_PROJECT \
-              --display-name $GCS_PROD_SA
-
           GCS_SA_SPIN_EMAIL=$(gcloud iam service-accounts list \
               --project=$GCP_PROJECT \
               --filter="displayName:$GCS_SPIN_SA" \
               --format='value(email)')
 
-          GCS_SA_PROD_EMAIL=$(gcloud iam service-accounts list \
-              --project=$GCP_PROJECT \
-              --filter="displayName:$GCS_PROD_SA" \
-              --format='value(email)')
-
           gcloud projects add-iam-policy-binding $GCP_PROJECT \
               --role roles/storage.admin \
               --member serviceAccount:$GCS_SA_SPIN_EMAIL
-
-          gcloud projects add-iam-policy-binding $GCP_PROJECT \
-              --role roles/storage.admin \
-              --member serviceAccount:$GCS_SA_PROD_EMAIL
 
           HALYARD_HOST=$(echo halyard-host-$1 | tr '_.' '-')
 
@@ -82,7 +68,7 @@ while true; do
               --scopes=cloud-platform \
               --service-account=$HALYARD_SA_EMAIL \
               --image-project=ubuntu-os-cloud \
-              --image-family=ubuntu-1404-lts
+              --image-family=ubuntu-1404-lts \
               --labels env=production$1,owner=$USER
 
           echo "gcloud compute ssh $HALYARD_HOST" \
@@ -102,6 +88,8 @@ while true; do
                       --zone=europe-west2-c \
                       --ssh-flag="-L 9000:localhost:9000" \
                       --ssh-flag="-L 8084:localhost:8084"
+                    echo "---> you can connect later by running:\n" \
+                      "sh connect-to-halyard-host-$1.sh"
           		      break;;
                   [Nn]* )
                     echo "---> you can connect later by running:\n" \

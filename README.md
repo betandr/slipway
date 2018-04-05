@@ -45,12 +45,11 @@ for the Spinnaker external endpoints will be provisioned such as `europe-west2`,
 and `$CLUSTER_ZONE` is the zone you wish to provision in, such as
 `europe-west2-c`.
 
-For these example values two clusters will be provisioned:
-- spinnaker-cluster-001: 3 Nodes of 1 vCPUs in Zone europe-west2-c
-- foobarbaz-cluster-001: 6 Nodes of 1 vCPUs in Zone europe-west2-c
+For these example values the following cluster will be provisioned:
+- foobarbaz-cluster-001: 6 Nodes of 2 vCPUs in Zone europe-west2-c
 
 The script will also reserve two IP addresses `spinnaker-$INDEX` and
-`spinnaker-api-$INDEX` which you should note down for the
+`spinnaker-api-$INDEX` which you should note for the
 [Run Spinnaker provisioning script](#run-spinnaker-provisioning-script) step later.
 
 ## 2. Provision Halyard Host VM
@@ -148,11 +147,8 @@ This is not yet automated as it could potentially be dangerous, but things to
 clear up for the clusters and VM host are:
 - Compute Engine: Halyard Host VM: `halyard-host-$INDEX` + Persistent Disk
 - Kubernetes Engine: `$CLUSTER_NAME-cluster-$INDEX`
-- Kubernetes Engine: `spinnaker-cluster-$INDEX`
 - Service Account: `halyard-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
-- Service Account: `gcs-prod-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - Service Account: `gcs-spin-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
-- IAM Permissions: `gcs-prod-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - IAM Permissions: `gcs-spin-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - IAM Permissions: `halyard-service-account-$INDEX@$PROJECT.iam.gserviceaccount.com`
 - VPC Network: `spinnaker-$INDEX` reserved external IP
