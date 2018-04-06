@@ -19,26 +19,26 @@ while true; do
     read -p "Create \`halyard-host-$1\` and service accounts (y/n)? " yn
     case $yn in
         [Yy]* )
-      		GCP_PROJECT=$(gcloud info --format='value(config.project)')
-      		HALYARD_SA=halyard-service-account-$1
+          GCP_PROJECT=$(gcloud info --format='value(config.project)')
+          HALYARD_SA=halyard-service-account-$1
 
-      		echo "---> creating Halyard host VM service account..."
-      		gcloud iam service-accounts create $HALYARD_SA \
-      		    --project=$GCP_PROJECT \
-      		    --display-name $HALYARD_SA
+          echo "---> creating Halyard host VM service account..."
+          gcloud iam service-accounts create $HALYARD_SA \
+              --project=$GCP_PROJECT \
+              --display-name $HALYARD_SA
 
-      		HALYARD_SA_EMAIL=$(gcloud iam service-accounts list \
-      		    --project=$GCP_PROJECT \
-      		    --filter="displayName:$HALYARD_SA" \
-      		    --format='value(email)')
+          HALYARD_SA_EMAIL=$(gcloud iam service-accounts list \
+              --project=$GCP_PROJECT \
+              --filter="displayName:$HALYARD_SA" \
+              --format='value(email)')
 
-      		gcloud projects add-iam-policy-binding $GCP_PROJECT \
-      		    --role roles/iam.serviceAccountKeyAdmin \
-      		    --member serviceAccount:$HALYARD_SA_EMAIL
+          gcloud projects add-iam-policy-binding $GCP_PROJECT \
+              --role roles/iam.serviceAccountKeyAdmin \
+              --member serviceAccount:$HALYARD_SA_EMAIL
 
-      		gcloud projects add-iam-policy-binding $GCP_PROJECT \
-      		    --role roles/container.admin \
-      		    --member serviceAccount:$HALYARD_SA_EMAIL
+          gcloud projects add-iam-policy-binding $GCP_PROJECT \
+              --role roles/container.admin \
+              --member serviceAccount:$HALYARD_SA_EMAIL
 
           echo "---> creating Spinnaker service account..."
           GCS_SPIN_SA=gcs-spin-service-account-$1
@@ -90,7 +90,7 @@ while true; do
                       --ssh-flag="-L 8084:localhost:8084"
                     echo "---> you can connect later by running:\n" \
                       "sh connect-to-halyard-host-$1.sh"
-          		      break;;
+                    break;;
                   [Nn]* )
                     echo "---> you can connect later by running:\n" \
                       "sh connect-to-halyard-host-$1.sh"
@@ -99,7 +99,7 @@ while true; do
               esac
           done
 
-      		break;;
+          break;;
         [Nn]* ) exit;;
         * ) echo "Please answer yes or no.";;
     esac

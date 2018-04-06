@@ -8,6 +8,16 @@ if test "$#" -ne 4; then
     exit 1
 fi
 
+if ! [ -x "$(command -v kubectl)" ]; then
+  echo 'Error: kubectl not found, to install see https://kubernetes.io/docs/tasks/tools/install-kubectl/' >&2
+  exit 1
+fi
+
+if ! [ -x "$(command -v gcloud)" ]; then
+  echo 'Error: gcloud not found, to install see https://cloud.google.com/sdk/downloads' >&2
+  exit 1
+fi
+
 echo "\n" \
 ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n" \
 ":: Warning: This script will provision infrastructure in the cloud and   ::\n" \
@@ -24,7 +34,7 @@ while true; do
           # TODO remove this when Kubernetes v1.10 released
           gcloud config set container/new_scopes_behavior true
 
-      		echo "---> creating $2-cluster-$1..."
+          echo "---> creating $2-cluster-$1..."
           gcloud container clusters create "$2-cluster-$1" \
             --project $GCP_PROJECT \
             --zone $4 \
@@ -38,11 +48,15 @@ while true; do
             --enable-cloud-monitoring \
             --subnetwork "default" \
             --labels env=production$1,owner=$USER
-          echo "---> complete..."
+          echo "---> cluster creation complete..."
 
-      		break;;
+          echo "---> creating cluster role binding for Spinnaker..."
+          kubectl create clusterrolebinding client-cluster-admin-binding \
+            --clusterrole cluster-admin --user client
+
+          break;;
         [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
+        * ) echo "Please answer 'y' for yes or 'n' for no.";;
     esac
 done
 
@@ -66,10 +80,10 @@ while true; do
           read -n 1 -s -r -p "---> note the address then press any key to continue"
           echo ""
 
-      		echo "---> complete..."
+          echo "---> complete..."
 
-      		break;;
+          break;;
         [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
+        * ) echo "Please answer 'y' for yes or 'n' for no";;
     esac
 done

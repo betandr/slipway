@@ -33,7 +33,7 @@ gcloud config set project $PROJECT_NAME
 ```
 ...where `$PROJECT_NAME` is the project you wish to provision infrastructure in.
 
-## 1. Provision Kubernetes clusters
+## 1. Provision Kubernetes cluster
 
 ### Get the Kubernetes provisioning script
 ```
@@ -97,13 +97,6 @@ gcloud projects list
 gcloud config set project $PROJECT_NAME
 ```
 ...where `$PROJECT_NAME` is the project you wish to provision infrastructure in.
-
-The script uses
-[Application Default Credentials](https://cloud.google.com/docs/authentication/production)
-to authenticate to the cluster. To ensure that kubectl has the proper credentials, run:
-```
-gcloud auth application-default login
-```
 
 ### Set up a DNS record for Spinnaker UI and Spinnaker API
 Follow the [Public Spinnaker on GKE](https://www.spinnaker.io/setup/quickstart/halyard-gke-public/))
