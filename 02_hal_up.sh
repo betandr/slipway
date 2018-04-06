@@ -40,7 +40,7 @@ while true; do
       		    --role roles/container.admin \
       		    --member serviceAccount:$HALYARD_SA_EMAIL
 
-          echo "---> creating Spinnaker and cluster service account..."
+          echo "---> creating Spinnaker service account..."
           GCS_SPIN_SA=gcs-spin-service-account-$1
 
           echo "---> creating GCS and GCR service accounts..."
