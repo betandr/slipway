@@ -1,3 +1,4 @@
 connect-to-halyard-host-*.sh
 repos.txt
 secrets
+.DS_Store
