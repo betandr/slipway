@@ -4,7 +4,7 @@
 # author: Beth Anderson (github.com/betandr)
 
 if test "$#" -ne 4; then
-    echo "Usage: sh 01_kube_up.sh $INDEX $CLUSTER_NAME $IP_REGION $CLUSTER_ZONE"
+    echo "Usage: sh 01_kube_up.sh \$INDEX \$CLUSTER_NAME \$IP_REGION \$CLUSTER_ZONE"
     exit 1
 fi
 
@@ -55,7 +55,7 @@ while true; do
             --clusterrole cluster-admin --user client
 
           break;;
-        [Nn]* ) exit;;
+        [Nn]* ) break;;
         * ) echo "Please answer 'y' for yes or 'n' for no.";;
     esac
 done

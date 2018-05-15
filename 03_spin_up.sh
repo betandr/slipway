@@ -4,7 +4,7 @@
 # author: Beth Anderson (github.com/betandr)
 
 if test "$#" -ne 2; then
-    echo "Usage: sh 02_spin_up.sh $INDEX $CLUSTER_NAME"
+    echo "Usage: sh 02_spin_up.sh \$INDEX \$CLUSTER_NAME"
     exit 1
 fi
 
@@ -155,11 +155,11 @@ while true; do
           if [ ! -z "$OVERRIDE_UI_URL" ]
           then
             echo "---> patching spin-deck with loadBalancerIP $SPIN_DECK_IP"
-            curl https://raw.githubusercontent.com/betandr/slipway/master/patch-deck.yaml | sed s/SPIN_DECK_IP/$SPIN_DECK_IP/g > patch-deck.yaml
+            curl https://raw.githubusercontent.com/betandr/slipway/master/resources/spinnaker/patch-deck.yaml | sed s/SPIN_DECK_IP/$SPIN_DECK_IP/g > patch-deck.yaml
             kubectl patch svc spin-deck --patch "$(cat patch-deck.yaml)" -n spinnaker
 
             echo "---> patching spin-gate with loadBalancerIP $SPIN_GATE_IP"
-            curl https://raw.githubusercontent.com/betandr/slipway/master/patch-gate.yaml | sed s/SPIN_GATE_IP/$SPIN_GATE_IP/g > patch-gate.yaml
+            curl https://raw.githubusercontent.com/betandr/slipway/master/resources/spinnaker/patch-gate.yaml | sed s/SPIN_GATE_IP/$SPIN_GATE_IP/g > patch-gate.yaml
             kubectl patch svc spin-gate --patch "$(cat patch-gate.yaml)" -n spinnaker
 
             echo "---> ACTION: update domain record target for $OVERRIDE_UI_URL and $OVERRIDE_API_URL with new addresses..."

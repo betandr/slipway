@@ -4,7 +4,7 @@
 # author: Beth Anderson (github.com/betandr)
 
 if test "$#" -ne 1; then
-    echo "Usage: sh 01_hal_up.sh $INDEX"
+    echo "Usage: sh 01_hal_up.sh \$INDEX"
     exit 1
 fi
 

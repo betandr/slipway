@@ -162,6 +162,21 @@ updated. You will be prompted for the `spinnaker-$INDEX` and the
 `spinnaker-api-$INDEX` addresses from the
 [1. Provision Kubernetes clusters](#1-provision-kubernetes-clusters) step.
 
+## 04. Drone.io
+
+### Run Drone provisioning script
+This script is based on [Bo-Yi Wu](https://github.com/appleboy)'s [drone-on-kubernetes/](https://github.com/appleboy/drone-on-kubernetes/) scripts,
+used with thanks in accordance with the
+[MIT licence](https://github.com/appleboy/drone-on-kubernetes/blob/master/LICENSE).
+
+The Drone script can provision a persistent disk instance which is used for the
+server database. You'll probably only really want to do this once as you'll
+probably want to keep the same server database between installs, otherwise you'll
+need to set up the build tasks each time.
+```
+sh 04_drone_up.sh $ZONE
+```
+
 ## Decommissioning
 This is not yet automated as it could potentially be dangerous, but things to
 clear up for the clusters and VM host are:
