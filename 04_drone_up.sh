@@ -32,7 +32,7 @@ while true; do
     read -p "Create a NEW persistent disk \`drone-server-db\` in zone \`$1\` in the \`$GCP_PROJECT\` project (y/n)? " yn
     case $yn in
         [Yy]* )
-          gcloud compute disks create --size 5GB drone-server-db --zone=$1
+          gcloud compute disks create --size 10GB drone-server-db --zone=$1
           break;;
         [Nn]* ) break;;
         * ) echo "Please answer 'y' for yes or 'n' for no.";;
@@ -101,6 +101,10 @@ while true; do
 
           echo "---> creating agent deployment..."
           kubectl create -f resources/drone/agent-deployment.yaml 2> /dev/null
+
+          echo "---> creating ingress controller..."
+          kubectl create -f resources/drone/ingress.yaml 2> /dev/null
+
 
           while true; do
               read -p "Watch pod creation? (Ctrl+C to Quit) (y/n)? " yn

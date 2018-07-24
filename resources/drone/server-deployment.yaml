@@ -97,6 +97,21 @@ spec:
             configMapKeyRef:
               name: drone-config
               key: server.debug
+        - name: DRONE_KEEPALIVE_TIME
+          valueFrom:
+            configMapKeyRef:
+              name: drone-config
+              key: agent.keepalive.time
+        - name: DRONE_KEEPALIVE_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: drone-config
+              key: agent.keepalive.timeout
+        - name: DRONE_KEEPALIVE_MIN_TIME
+          valueFrom:
+            configMapKeyRef:
+              name: drone-config
+              key: agent.keepalive.min.time
 
       volumes:
         - name: drone-server-db
