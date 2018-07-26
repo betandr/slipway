@@ -1,0 +1,25 @@
+service:
+  httpPort: 80
+  nodePort: 32015
+  type: NodePort
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "X_PROJECT-drone-k8s"
+    kubernetes.io/ingress.allow-http: "false"
+  hosts:
+    - X_SERVER_HOST
+  tls:
+    - hosts:
+      - X_SERVER_HOST
+      secretName: X_PROJECT-drone-tls
+server:
+  host: "X_SERVER_PROTOCOL:X_SERVER_HOST"
+  env:
+    DRONE_PROVIDER: "github"
+    DRONE_OPEN: "false"
+    DRONE_GITHUB: "true"
+    DRONE_ADMIN: "X_DRONE_ADMIN"
+    DRONE_GITHUB_CLIENT: "X_DRONE_GITHUB_CLIENT"
+    DRONE_GITHUB_SECRET: "X_DRONE_GITHUB_SECRET"
