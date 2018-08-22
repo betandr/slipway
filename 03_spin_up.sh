@@ -73,8 +73,7 @@ while true; do
             --iam-account $GCS_SPIN_SA_EMAIL
 
           echo "---> set Halyard version..."
-          # TODO use $(hal version latest -q)
-          hal config version edit --version 1.6.0
+          hal config version edit --version $(hal version latest -q)
 
           echo "---> configure GCS persistence..."
           hal config storage gcs edit \
@@ -94,6 +93,7 @@ while true; do
           hal config provider kubernetes enable
 
           hal config provider kubernetes account add $CLUSTER_NAME-k8s-account-$INDEX \
+              --provider-version v2 \
               --docker-registries $CLUSTER_NAME-gcr-account-$INDEX \
               --context "gke_"$GCP_PROJECT"_"$CLUSTER_ZONE"_"$CLUSTER_NAME-cluster-$INDEX
 
