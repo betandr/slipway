@@ -1,46 +1,26 @@
 #!/usr/bin/env bash
 
-# This script is based on https://github.com/appleboy/drone-on-kubernetes/tree/master/gke
-# by: Bo-Yi Wu (github.com/appleboy)
 # author: Beth Anderson (github.com/betandr)
 
-if test "$#" -ne 1; then
-    echo "Usage: sh 04_drone_up.sh \$ZONE"
+if test "$#" -ne 0; then
+    echo "Usage: sh 04_drone_up.sh"
     exit 1
 fi
 
 if ! [ -x "$(command -v kubectl)" ]; then
-  echo 'Error: kubectl not found, to install see https://kubernetes.io/docs/tasks/tools/install-kubectl/' >&2
+  echo 'Error: `kubectl` not found, to install see https://kubernetes.io/docs/tasks/tools/install-kubectl/' >&2
   exit 1
 fi
 
-if ! [ -x "$(command -v gcloud)" ]; then
-  echo 'Error: gcloud not found, to install see https://cloud.google.com/sdk/downloads' >&2
+if ! [ -x "$(command -v helm)" ]; then
+  echo 'Error: `helm` not found, to install see https://docs.helm.sh/using_helm/' >&2
   exit 1
 fi
 
-echo "\n" \
-":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n" \
-":: This script can create a NEW persistent disk for the Drone server   ::\n" \
-":: database although you may wish to use an existing disk to maintain  ::\n" \
-":: state between deployments.                                          ::\n" \
-":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n"
-
-GCP_PROJECT=$(gcloud info --format='value(config.project)')
+K8S_CLUSTER=$(kubectl config current-context)
 
 while true; do
-    read -p "Create a NEW persistent disk \`drone-server-db\` in zone \`$1\` in the \`$GCP_PROJECT\` project (y/n)? " yn
-    case $yn in
-        [Yy]* )
-          gcloud compute disks create --size 10GB drone-server-db --zone=$1
-          break;;
-        [Nn]* ) break;;
-        * ) echo "Please answer 'y' for yes or 'n' for no.";;
-    esac
-done
-
-while true; do
-    read -p "Install Drone on the current cluster in the \`$GCP_PROJECT\` project (y/n)? " yn
+    read -p "Install Drone on the \`$K8S_CLUSTER\`? Are you sure?  (y/n)? " yn
     case $yn in
         [Yy]* )
           KERNEL_NAME=$(uname -s)
@@ -52,81 +32,73 @@ while true; do
             exit 1
           fi
 
-          echo "---> clearing out any existing configmap..."
-          kubectl delete namespace drone 2> /dev/null
+          echo "---> ACTION: enter project name:"
+          read X_PROJECT
+          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_PROJECT#${X_PROJECT}#g" -i "" resources/drone/values.yaml
+          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_PROJECT#${X_PROJECT}#g" -i resources/drone/values.yaml
 
-          echo "---> create drone namespace..."
-          kubectl create -f resources/drone/namespace.yaml 2> /dev/null
+          echo "---> ACTION: enter hostname drone.example.com:"
+          read X_SERVER_HOST
+          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_SERVER_HOST#${X_SERVER_HOST}#g" -i "" resources/drone/values.yaml
+          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_SERVER_HOST#${X_SERVER_HOST}#g" -i resources/drone/values.yaml
 
-          echo "---> generating secrets..."
-          if [ "$KERNEL_NAME" == "Darwin" ]; then
-            DRONE_TOKEN=`openssl rand -base64 8 | md5 | head -c8; echo`
-          else
-            DRONE_TOKEN=`cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
-          fi
-          B64_DRONE_TOKEN=`echo $DRONE_TOKEN | base64`
-          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s/X_BASE64_ENCODED_SECRET/${B64_DRONE_TOKEN}/g" -i "" resources/drone/secret.yaml
-          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s/X_BASE64_ENCODED_SECRET/${B64_DRONE_TOKEN}/g" -i resources/drone/secret.yaml
+          echo "---> ACTION: enter protocol, such as https:"
+          read X_SERVER_PROTOCOL
+          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_SERVER_PROTOCOL#${X_SERVER_PROTOCOL}#g" -i "" resources/drone/values.yaml
+          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_SERVER_PROTOCOL#${X_SERVER_PROTOCOL}#g" -i resources/drone/values.yaml
 
-          echo "---> creating secrets..."
-          kubectl create -f resources/drone/secret.yaml 2> /dev/null
+          echo "---> ACTION: enter the username of the drone admin:"
+          read X_DRONE_ADMIN
+          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_DRONE_ADMIN#${X_DRONE_ADMIN}#g" -i "" resources/drone/values.yaml
+          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_DRONE_ADMIN#${X_DRONE_ADMIN}#g" -i resources/drone/values.yaml
 
-          echo "---> setting server admin username to $USER..."
-          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s/X_SERVER_ADMIN/${USER}/g" -i "" resources/drone/configmap.yaml
-          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s/X_SERVER_ADMIN/${USER}/g" -i resources/drone/configmap.yaml
+          echo "---> ACTION: enter Github Oauth Client ID:"
+          read X_DRONE_GITHUB_CLIENT
+          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_DRONE_GITHUB_CLIENT#${X_DRONE_GITHUB_CLIENT}#g" -i "" resources/drone/values.yaml
+          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_DRONE_GITHUB_CLIENT#${X_DRONE_GITHUB_CLIENT}#g" -i resources/drone/values.yaml
 
-          echo "---> ACTION: enter hostname with scheme, such as http://drone.example.com:"
-          read GCI_HON
-          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_HOSTNAME#${GCI_HON}#g" -i "" resources/drone/configmap.yaml
-          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_HOSTNAME#${GCI_HON}#g" -i resources/drone/configmap.yaml
+          echo "---> ACTION: enter Github Oauth Secret:"
+          read X_DRONE_GITHUB_SECRET
+          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_DRONE_GITHUB_SECRET#${X_DRONE_GITHUB_SECRET}#g" -i "" resources/drone/values.yaml
+          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_DRONE_GITHUB_SECRET#${X_DRONE_GITHUB_SECRET}#g" -i resources/drone/values.yaml
 
-          echo "---> ACTION: enter Github Oauth2 Client ID:"
-          read GCI_VAL
-          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s/X_GITHUB_CLIENT/${GCI_VAL}/g" -i "" resources/drone/configmap.yaml
-          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s/X_GITHUB_CLIENT/${GCI_VAL}/g" -i resources/drone/configmap.yaml
+          echo "---> Configuration saved to resources/drone/values.yaml"
 
-          echo "---> ACTION: enter Github Oauth2 secret:"
-          read GOS_VAL
-          [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s/X_GITHUB_SECRET/${GOS_VAL}/g" -i "" resources/drone/configmap.yaml
-          [ "$KERNEL_NAME" == "Linux" ] && sed -e "s/X_GITHUB_SECRET/${GOS_VAL}/g" -i resources/drone/configmap.yaml
+          echo "---> Creating Tiller RBAC"
+          kubectl apply -f resources/drone/tiller-rbac-config.yaml
 
-          echo "---> creating configmap..."
-          kubectl create -f resources/drone/configmap.yaml 2> /dev/null
+          echo "---> Configuring Tiller"
+          helm init --service-account tiller
 
-          echo "---> creating server deployment..."
-          kubectl create -f resources/drone/server-deployment.yaml 2> /dev/null
-
-          echo "---> creating service..."
-          kubectl create -f resources/drone/server-service.yaml 2> /dev/null
-
-          echo "---> creating agent deployment..."
-          kubectl create -f resources/drone/agent-deployment.yaml 2> /dev/null
-
-          echo "---> creating ingress controller..."
-          kubectl create -f resources/drone/ingress.yaml 2> /dev/null
-
+          echo "---> Installing Drone with Helm"
+          helm install --name $X_PROJECT -f resources/drone/values.yaml stable/drone
 
           while true; do
-              read -p "Watch pod creation? (Ctrl+C to Quit) (y/n)? " yn
+              read -p "Install cert-manager to manage certs? (y/n)? " yn
               case $yn in
                   [Yy]* )
-                    watch kubectl --namespace=drone get pods
+                    [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_PROJECT#${X_PROJECT}#g" -i "" resources/drone/drone-cert.yaml
+                    [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_PROJECT#${X_PROJECT}#g" -i resources/drone/drone-cert.yaml
+
+                    [ "$KERNEL_NAME" == "Darwin" ] && sed -e "s#X_SERVER_HOST#${X_SERVER_HOST}#g" -i "" resources/drone/drone-cert.yaml
+                    [ "$KERNEL_NAME" == "Linux" ] && sed -e "s#X_SERVER_HOST#${X_SERVER_HOST}#g" -i resources/drone/drone-cert.yaml
+
+                    helm install --name cert-manager --namespace kube-system stable/cert-manager
+
+                    kubectl apply -f resources/drone/drone-cert.yaml
+
+                    kubectl apply -f resources/drone/acme-issuer.yaml
+
                     break;;
-                  [Nn]* ) break;;
+                  [Nn]* )
+                    echo "As you have not set up cert-manager you will need to set $X_PROJECT-drone-tls manually"
+                    break;;
                   * ) echo "Please answer 'y' for yes or 'n' for no.";;
               esac
           done
 
-          echo "\n" \
-          ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n" \
-          "::  Drone Agent installation                                             ::\n" \
-          ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n"
-          kubectl get services --namespace=drone
-          echo "  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
-          kubectl --namespace=drone get deployments
-          echo "  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
-          kubectl --namespace=drone get pods
-          echo "  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
+          echo "To update Drone later you can edit the resources/drone/drone-cert.yaml file and run:"
+          echo "`helm upgrade $X_PROJECT -f resources/drone/values.yaml stable/drone`"
 
           break;;
         [Nn]* ) exit;;

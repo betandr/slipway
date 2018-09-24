@@ -165,16 +165,14 @@ updated. You will be prompted for the `spinnaker-$INDEX` and the
 ## 04. Drone.io
 
 ### Run Drone provisioning script
-This script is based on [Bo-Yi Wu](https://github.com/appleboy)'s [drone-on-kubernetes/](https://github.com/appleboy/drone-on-kubernetes/) scripts,
-used with thanks in accordance with the
-[MIT licence](https://github.com/appleboy/drone-on-kubernetes/blob/master/LICENSE).
 
-The Drone script can provision a persistent disk instance which is used for the
-server database. You'll probably only really want to do this once as you'll
-probably want to keep the same server database between installs, otherwise you'll
-need to set up the build tasks each time.
+Helm is used to install Drone and the script can also install
+[cert-manager](https://github.com/jetstack/cert-manager) to manage certificates.
+To use TLS without cert-manager, you will need to set the TLS secret manually.
+The script will tell you if this needs to be done.
+
 ```
-sh 04_drone_up.sh $ZONE
+sh 04_drone_up.sh
 ```
 
 ## Decommissioning
