@@ -175,6 +175,19 @@ The script will tell you if this needs to be done.
 sh 04_drone_up.sh
 ```
 
+#### Values in Use
+
+Until we start using a better way of storing our current infrastructure state, here is a record of the current values used to provision Drone:
+
+|        Variable        | Replacement Key in `values.yaml` |     Current Value      |                         Notes                          |
+|========================|==================================|========================|========================================================|
+| Project Name           | `X_PROJECT`                      | `datalabdrone`              | Prefix for k8s deployments, *not* the GCP project name |
+| Host Name              | `X_SERVER_HOST`                  | `drone.datalab.rocks`  |                                                        |
+| Drone admin username   | `X_DRONE_ADMIN`                  | `bbcdatalab`           | should match Github user name                          |
+| Github OAuth Client ID | `X_DRONE_GITHUB_CLIENT`          | _obtained from github_ |                                                        |
+| Github OAuth Secret    | `X_DRONE_GITHUB_SECRET`          | _obtained from github_ |                                                        |
+
+
 ## Decommissioning
 This is not yet automated as it could potentially be dangerous, but things to
 clear up for the clusters and VM host are:

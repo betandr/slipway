@@ -67,8 +67,8 @@ while true; do
           echo "---> Creating Tiller RBAC"
           kubectl apply -f resources/drone/tiller-rbac-config.yaml
 
-          echo "---> Configuring Tiller"
-          helm init --service-account tiller
+          echo "---> Configuring Tiller and waiting for rollout"
+          helm init --service-account tiller;kubectl rollout status -w deployment/tiller-deploy --namespace=kube-system;
 
           echo "---> Installing Drone with Helm"
           helm install --name $X_PROJECT -f resources/drone/values.yaml stable/drone
